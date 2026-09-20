@@ -63,11 +63,4 @@ target_link_libraries(cell_testbench
 
 pico_add_extra_outputs(cell_testbench)
 
-# Standalone onboard RGB LED test for the Waveshare RP2350-One.
-add_executable(led_green examples/led_green.c)
-target_link_libraries(led_green pico_stdlib hardware_pio)
-pico_generate_pio_header(led_green
-        ${PICO_SDK_PATH}/src/rp2_common/pico_status_led/ws2812.pio)
-pico_enable_stdio_uart(led_green 0)
-pico_enable_stdio_usb(led_green 1)
-pico_add_extra_outputs(led_green)
+
