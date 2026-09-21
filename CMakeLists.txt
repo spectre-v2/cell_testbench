@@ -38,6 +38,7 @@ pico_sdk_init()
 add_executable(cell_testbench
         main.c
         statemachine.c
+        ads_driver.c
 )
 
 pico_set_program_name(cell_testbench "cell_testbench")
@@ -48,8 +49,7 @@ pico_enable_stdio_uart(cell_testbench 0)
 pico_enable_stdio_usb(cell_testbench 1)
 
 # Add the standard library to the build
-target_link_libraries(cell_testbench
-        pico_stdlib)
+target_link_libraries(cell_testbench pico_stdlib)
 
 # Add the standard include files to the build
 target_include_directories(cell_testbench PRIVATE

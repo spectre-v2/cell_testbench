@@ -4,6 +4,7 @@
             "name": "Pico",
             "includePath": [
                 "${workspaceFolder}/**",
+                "${userHome}/.pico-sdk/toolchain/RISCV_PICO_2_3_1_0/riscv32-pico-elf/include",
                 "${userHome}/.pico-sdk/sdk/2.3.1/**"
             ],
             "forcedInclude": [
@@ -13,8 +14,8 @@
             "defines": [],
             "compilerPath": "${userHome}/.pico-sdk/toolchain/RISCV_PICO_2_3_1_0/bin/riscv32-pico-elf-gcc",
             "compileCommands": "${workspaceFolder}/build/compile_commands.json",
-            "cStandard": "c17",
-            "cppStandard": "c++14",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
             "intelliSenseMode": "linux-gcc-arm"
         }
     ],
