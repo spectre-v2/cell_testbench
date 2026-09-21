@@ -5,6 +5,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+//circuit constants
+#define ADS_CHANNEL_COUNT 8
+#define ADS_ADC_MAX 0b011111111111111111111111
+#define ADS_VREFP 2.5f //Volt
 
 //timing constants
 #define ADS_TIME_SPI_T6 10 //us
@@ -232,18 +236,42 @@ typedef union {
 } ADS_REG_FSC2_t;
 
 
-// struct containing all sampled data of all channels 
-typedef struct {
-        int32_t ch_1_res_bin;
-        int32_t ch_2_res_bin;
-        int32_t ch_3_res_bin;
-        int32_t ch_4_res_bin;
-        int32_t ch_5_res_bin;
-        int32_t ch_6_res_bin;
-        int32_t ch_7_res_bin;
-        int32_t ch_8_res_bin;
+// union containing sampled raw adc data of all channels 
+typedef union{
 
-}ADS_FULL_SAMPLE_RESULT_t;
+    struct {
+        int32_t ch_1_raw;
+        int32_t ch_2_raw;
+        int32_t ch_3_raw;
+        int32_t ch_4_raw;
+        int32_t ch_5_raw;
+        int32_t ch_6_raw;
+        int32_t ch_7_raw;
+        int32_t ch_8_raw;
+
+    }data_fields;
+
+    int32_t data_array[8];
+
+}ADS_FULL_SAMPLE_RAW_t;
+
+// union containing channel voltages
+
+typedef union{
+    struct {
+        int32_t ch_1_voltage;
+        int32_t ch_2_voltage;
+        int32_t ch_3_voltage;
+        int32_t ch_4_voltage;
+        int32_t ch_5_voltage;
+        int32_t ch_6_voltage;
+        int32_t ch_7_voltage;
+        int32_t ch_8_voltage;
+    }data_fields;
+
+    int32_t data_array[8];
+}ADS_FULL_SAMPLE_VOLTAGES_t;
+
 
 /** @brief Setzt Chip Select auf LOW. */
 void cs_low(void);
@@ -270,7 +298,7 @@ bool _ADS_READY(void);
 void _ADS_INIT(void);
 
 /** @brief Misst einen Kanal blockierend und liefert den ADC-Rohwert. */
-int32_t _ADS_SAMPLE_CHANNEL(uint8_t channel);
+void _ADS_SAMPLE_CHANNEL(uint8_t channel, int32_t* sample_data);
 
 /** @brief Misst alle acht Kanaele nacheinander. */
-ADS_FULL_SAMPLE_RESULT_t _ADS_FULL_SAMPLE(void);
+void _ADS_FULL_SAMPLE(ADS_FULL_SAMPLE_RAW_t* full_sample_result);

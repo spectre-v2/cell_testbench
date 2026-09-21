@@ -39,6 +39,7 @@ add_executable(cell_testbench
         main.c
         statemachine.c
         ads_driver.c
+        volt_temp_calc.c
 )
 
 pico_set_program_name(cell_testbench "cell_testbench")

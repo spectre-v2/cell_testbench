@@ -82,7 +82,7 @@ void _ADS_INIT(){
     ADS_REG_STATUS_t reg_stat = {
         .data_fields.ORDER = 0,
         .data_fields.ACAL   =   0,
-        .data_fields.BUFEN = 1
+        .data_fields.BUFEN = 0
     };
 
     ADS_REG_MUX_t reg_mux = {
@@ -113,14 +113,12 @@ _ADS_WRITE_REG(ADS_REG_ADR_DRATE, reg_drate.raw_data);
 
 //--------------------------------------sampling-----------------------------------------------
 
-int32_t _ADS_SAMPLE_CHANNEL(uint8_t channel){
+void _ADS_SAMPLE_CHANNEL(uint8_t channel, int32_t* sample_data){
 
     uint8_t rdata_cmd = ADS_CMD_RDATA;
     uint8_t sample_data_array[3];
-    uint32_t sample_data;
 
     
-
     _ADS_SET_CHANNEL(channel);
     _ADS_SEND_CMD(ADS_CMD_SYNC);
     sleep_us(ADS_TIME_SAMPLE);
@@ -138,31 +136,50 @@ int32_t _ADS_SAMPLE_CHANNEL(uint8_t channel){
 
     bool negative=  (sample_data_array[0] & 0b10000000);
 
-    sample_data=    ((uint32_t)sample_data_array[0] <<16) |
+    *sample_data=    ((uint32_t)sample_data_array[0] <<16) |
                     ((uint32_t)sample_data_array[1] << 8) |
                     (uint32_t)sample_data_array[2];
 
     if(negative){
-        sample_data = sample_data | (0b11111111 << 24);
+        *sample_data = (int32_t)((uint32_t)*sample_data | (0b11111111u << 24));
+    }
+    
+}
+
+void _ADS_FULL_SAMPLE(ADS_FULL_SAMPLE_RAW_t *full_sample_result){
+
+for(uint8_t channel = 0; channel < ADS_CHANNEL_COUNT ; channel ++){
+    _ADS_SAMPLE_CHANNEL(channel, &full_sample_result->data_array[channel]);
     }
 
-    return (int32_t)sample_data;
-    
 }
 
-ADS_FULL_SAMPLE_RESULT_t _ADS_FULL_SAMPLE(){
 
-    ADS_FULL_SAMPLE_RESULT_t full_sample_result;
-    
-    full_sample_result.ch_1_res_bin= _ADS_SAMPLE_CHANNEL(0);
-    full_sample_result.ch_2_res_bin= _ADS_SAMPLE_CHANNEL(1);
-    full_sample_result.ch_3_res_bin= _ADS_SAMPLE_CHANNEL(2);
-    full_sample_result.ch_4_res_bin= _ADS_SAMPLE_CHANNEL(3);
-    full_sample_result.ch_5_res_bin= _ADS_SAMPLE_CHANNEL(4);
-    full_sample_result.ch_6_res_bin= _ADS_SAMPLE_CHANNEL(5);
-    full_sample_result.ch_7_res_bin= _ADS_SAMPLE_CHANNEL(6);
-    full_sample_result.ch_8_res_bin= _ADS_SAMPLE_CHANNEL(7);
+void _ADS_SAMPLE_TO_VOLTAGE(ADS_FULL_SAMPLE_RAW_t* raw_data, ADS_FULL_SAMPLE_VOLTAGES_t* voltages){
+    for(uint8_t channel = 0; channel < ADS_CHANNEL_COUNT; channel ++){
 
-    return full_sample_result;
+        voltages->data_array[channel]= ADS_VREFP * (raw_data->data_array[channel]/ADS_ADC_MAX);
+    }
+}
+
+
+
+//main API
+
+ADS_FULL_SAMPLE_VOLTAGES_t ADS_GET_VOLTAGES(){
+
+    ADS_FULL_SAMPLE_VOLTAGES_t voltage_data;
+    ADS_FULL_SAMPLE_RAW_t raw_data;
+
+    _ADS_FULL_SAMPLE(&raw_data);
+    _ADS_SAMPLE_TO_VOLTAGE(&raw_data, &voltage_data);
+
+    return voltage_data;
 
 }
+
+
+
+
+
+
