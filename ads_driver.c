@@ -14,16 +14,22 @@
 #include <ads_driver.h>
 
 
+/** @brief Selects the ADC by driving chip select LOW. */
 void cs_low(){
     gpio_put(ADS_PIN_CS, 0);
 }
+/** @brief Waits for the CS hold time, then drives chip select HIGH. */
 void cs_high(){
     sleep_us(ADS_TIME_BEFORE_CS_1);
     gpio_put(ADS_PIN_CS, 1);
 }
 
 
-//-----------------------------------------basic operations----------------------------------------------
+/**
+ * @brief Reads a single ADC register.
+ * @param reg_adr Register address (0x00 to 0x0A).
+ * @return Register byte read from the ADC.
+ */
 uint8_t _ADS_READ_REG(uint8_t reg_adr){
    
     uint8_t cmd[2] = {
@@ -40,6 +46,11 @@ uint8_t _ADS_READ_REG(uint8_t reg_adr){
     return reg_read_buffer;
 }
 
+/**
+ * @brief Writes a single ADC register.
+ * @param reg_adr Address of the writable register.
+ * @param reg_cont New register value.
+ */
 void _ADS_WRITE_REG(uint8_t reg_adr, uint8_t reg_cont){
         
         uint8_t cmd[3] = {
@@ -52,6 +63,10 @@ void _ADS_WRITE_REG(uint8_t reg_adr, uint8_t reg_cont){
     cs_high();
 }
 
+/**
+ * @brief Sends a single command in its own CS transaction.
+ * @param cmd Command byte; the caller handles additional command delays.
+ */
 void _ADS_SEND_CMD(uint8_t cmd){
     cs_low();
     spi_write_blocking(ADS_SPI_PORT, &cmd, 1);
@@ -59,6 +74,10 @@ void _ADS_SEND_CMD(uint8_t cmd){
 }
 
 
+/**
+ * @brief Selects an analog input relative to AINCOM.
+ * @param channel Channel number from 0 to 7.
+ */
 void _ADS_SET_CHANNEL(uint8_t channel){
 
       ADS_REG_MUX_t reg_mux = {
@@ -69,6 +88,10 @@ void _ADS_SET_CHANNEL(uint8_t channel){
     _ADS_WRITE_REG(ADS_REG_ADR_MUX, reg_mux.raw_data);
 }
 
+/**
+ * @brief Reads the data-ready bit from the status register.
+ * @return true if DRDYn is LOW.
+ */
 bool _ADS_READY(){
    ADS_REG_STATUS_t tmp_reg_stat;
    tmp_reg_stat.raw_data = _ADS_READ_REG(ADS_REG_ADR_STATUS);
@@ -76,8 +99,11 @@ bool _ADS_READY(){
    return (bool)!tmp_reg_stat.data_fields.DRDYn;
 }
 
-//-----------------------initial register configuration-----------------------------
+/**
+ * @brief Resets and configures the ADC, then starts self-calibration.
+ * @pre SPI and CS are initialized. Wait for calibration to finish before sampling.
 
+ */
 void _ADS_INIT(){
     ADS_REG_STATUS_t reg_stat = {
         .data_fields.ORDER = 0,
@@ -108,11 +134,18 @@ _ADS_WRITE_REG(ADS_REG_ADR_STATUS, reg_stat.raw_data);
 _ADS_WRITE_REG(ADS_REG_ADR_MUX, reg_mux.raw_data);
 _ADS_WRITE_REG(ADS_REG_ADR_ADCON, reg_adcon.raw_data);
 _ADS_WRITE_REG(ADS_REG_ADR_DRATE, reg_drate.raw_data);
+_ADS_SEND_CMD(ADS_CMD_SELFCAL);
 
 }
 
-//--------------------------------------sampling-----------------------------------------------
 
+/**
+ * @brief Samples one channel relative to AINCOM using blocking transfers.
+ * @param channel Channel number from 0 to 7.
+ * @param[out] sample_data Valid pointer receiving the sign-extended ADC raw value.
+ * @pre The ADC is configured and calibration has completed.
+ * @note Waits for data readiness without a timeout.
+ */
 void _ADS_SAMPLE_CHANNEL(uint8_t channel, int32_t* sample_data){
 
     uint8_t rdata_cmd = ADS_CMD_RDATA;
@@ -146,33 +179,24 @@ void _ADS_SAMPLE_CHANNEL(uint8_t channel, int32_t* sample_data){
     
 }
 
-void _ADS_FULL_SAMPLE(ADS_FULL_SAMPLE_RAW_t *full_sample_result){
 
-for(uint8_t channel = 0; channel < ADS_CHANNEL_COUNT ; channel ++){
-    _ADS_SAMPLE_CHANNEL(channel, &full_sample_result->data_array[channel]);
-    }
-
-}
-
-
-void _ADS_SAMPLE_TO_VOLTAGE(ADS_FULL_SAMPLE_RAW_t* raw_data, ADS_FULL_SAMPLE_VOLTAGES_t* voltages){
-    for(uint8_t channel = 0; channel < ADS_CHANNEL_COUNT; channel ++){
-
-        voltages->data_array[channel]= ADS_VREFP * (raw_data->data_array[channel]/ADS_ADC_MAX);
-    }
-}
-
-
-
-//main API
-
-ADS_FULL_SAMPLE_VOLTAGES_t ADS_GET_VOLTAGES(){
+/**
+ * @brief Samples all eight channels sequentially and converts their readings to voltages.
+ * @return Channel voltages in volts relative to AINCOM; array index 0 corresponds to AIN0.
+ * @pre The ADC is ready for sampling; PGA = 1 and VREFN = 0 V.
+ */
+ADS_FULL_SAMPLE_VOLTAGES_t ADS_GET_VOLTAGES(void){
 
     ADS_FULL_SAMPLE_VOLTAGES_t voltage_data;
-    ADS_FULL_SAMPLE_RAW_t raw_data;
 
-    _ADS_FULL_SAMPLE(&raw_data);
-    _ADS_SAMPLE_TO_VOLTAGE(&raw_data, &voltage_data);
+    for(uint8_t channel = 0; channel < ADS_CHANNEL_COUNT; channel ++){
+
+        int32_t channel_raw_data;
+        _ADS_SAMPLE_CHANNEL(channel, &channel_raw_data);
+
+        //The factor 2.0f comes from the ADS1256 internal scaling.
+        voltage_data.data_array[channel]= 2.0f * ADS_VREFP * ((float)channel_raw_data/ADS_ADC_MAX);
+    }
 
     return voltage_data;
 

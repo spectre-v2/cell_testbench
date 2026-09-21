@@ -67,7 +67,7 @@
 //register data types
 typedef union {
     struct {
-        uint8_t DRDYn : 1; /* Nur lesbar; 0 = Daten bereit. */
+        uint8_t DRDYn : 1; /* Read-only; 0 = data ready. */
         uint8_t BUFEN : 1;
         uint8_t ACAL  : 1;
         uint8_t ORDER : 1;
@@ -90,7 +90,7 @@ typedef union {
     uint8_t raw_data;
 } ADS_REG_MUX_t;
 
-/* ADCON: Reset = 0x20; Bit 7 ist reserviert und muss 0 bleiben. */
+/* ADCON: Reset = 0x20; Bit 7 is reserved and must remain 0. */
 typedef union {
     struct {
         uint8_t PGA     : 3;
@@ -102,7 +102,7 @@ typedef union {
     uint8_t raw_data;
 } ADS_REG_ADCON_t;
 
-/* DRATE: Reset = 0xF0 (30000 SPS bei fCLKIN = 7,68 MHz). */
+/* DRATE: Reset = 0xF0 (30000 SPS at fCLKIN = 7.68 MHz). */
 typedef union {
     struct {
         uint8_t DR0 : 1;
@@ -118,7 +118,7 @@ typedef union {
     uint8_t raw_data;
 } ADS_REG_DRATE_t;
 
-/* IO: Reset = 0xE0; DIRn: 0 = Ausgang, 1 = Eingang. */
+/* IO: Reset = 0xE0; DIRn: 0 = output, 1 = input. */
 typedef union {
     struct {
         uint8_t DIO0 : 1;
@@ -135,11 +135,11 @@ typedef union {
 } ADS_REG_IO_t;
 
 /*
- * OFC und FSC bestehen jeweils aus drei Bytes: Byte 0 = LSB, Byte 2 = MSB.
- * Ihre Resetwerte haengen von der Kalibrierung ab und sind nicht fest 0.
+ * OFC and FSC each contain three bytes: byte 0 = LSB, byte 2 = MSB.
+ * Their reset values depend on calibration and are not fixed at 0.
  */
 
-/* OFC0: Offset-Kalibrierung, Bits 0-7. */
+/* OFC0: Offset calibration, Bits 0-7. */
 typedef union {
     struct {
         uint8_t OFC00 : 1;
@@ -155,7 +155,7 @@ typedef union {
     uint8_t raw_data;
 } ADS_REG_OFC0_t;
 
-/* OFC1: Offset-Kalibrierung, Bits 8-15. */
+/* OFC1: Offset calibration, Bits 8-15. */
 typedef union {
     struct {
         uint8_t OFC08 : 1;
@@ -171,7 +171,7 @@ typedef union {
     uint8_t raw_data;
 } ADS_REG_OFC1_t;
 
-/* OFC2: Offset-Kalibrierung, Bits 16-23. */
+/* OFC2: Offset calibration, Bits 16-23. */
 typedef union {
     struct {
         uint8_t OFC16 : 1;
@@ -187,7 +187,7 @@ typedef union {
     uint8_t raw_data;
 } ADS_REG_OFC2_t;
 
-/* FSC0: Verstaerkungskalibrierung, Bits 0-7. */
+/* FSC0: Gain calibration, Bits 0-7. */
 typedef union {
     struct {
         uint8_t FSC00 : 1;
@@ -203,7 +203,7 @@ typedef union {
     uint8_t raw_data;
 } ADS_REG_FSC0_t;
 
-/* FSC1: Verstaerkungskalibrierung, Bits 8-15. */
+/* FSC1: Gain calibration, Bits 8-15. */
 typedef union {
     struct {
         uint8_t FSC08 : 1;
@@ -219,7 +219,7 @@ typedef union {
     uint8_t raw_data;
 } ADS_REG_FSC1_t;
 
-/* FSC2: Verstaerkungskalibrierung, Bits 16-23. */
+/* FSC2: Gain calibration, Bits 16-23. */
 typedef union {
     struct {
         uint8_t FSC16 : 1;
@@ -236,69 +236,23 @@ typedef union {
 } ADS_REG_FSC2_t;
 
 
-// union containing sampled raw adc data of all channels 
-typedef union{
-
-    struct {
-        int32_t ch_1_raw;
-        int32_t ch_2_raw;
-        int32_t ch_3_raw;
-        int32_t ch_4_raw;
-        int32_t ch_5_raw;
-        int32_t ch_6_raw;
-        int32_t ch_7_raw;
-        int32_t ch_8_raw;
-
-    }data_fields;
-
-    int32_t data_array[8];
-
-}ADS_FULL_SAMPLE_RAW_t;
-
 // union containing channel voltages
 
 typedef union{
     struct {
-        int32_t ch_1_voltage;
-        int32_t ch_2_voltage;
-        int32_t ch_3_voltage;
-        int32_t ch_4_voltage;
-        int32_t ch_5_voltage;
-        int32_t ch_6_voltage;
-        int32_t ch_7_voltage;
-        int32_t ch_8_voltage;
+        float ch_1_voltage;
+        float ch_2_voltage;
+        float ch_3_voltage;
+        float ch_4_voltage;
+        float ch_5_voltage;
+        float ch_6_voltage;
+        float ch_7_voltage;
+        float ch_8_voltage;
     }data_fields;
 
-    int32_t data_array[8];
+    float data_array[8];
 }ADS_FULL_SAMPLE_VOLTAGES_t;
 
 
-/** @brief Setzt Chip Select auf LOW. */
-void cs_low(void);
-
-/** @brief Setzt Chip Select auf HIGH. */
-void cs_high(void);
-
-/** @brief Liest ein Register. */
-uint8_t _ADS_READ_REG(uint8_t reg_adr);
-
-/** @brief Schreibt ein Register. */
-void _ADS_WRITE_REG(uint8_t reg_adr, uint8_t reg_cont);
-
-/** @brief Sendet einen einzelnen Befehl. */
-void _ADS_SEND_CMD(uint8_t cmd);
-
-/** @brief Waehlt Kanal 0 bis 7 gegen AINCOM aus. */
-void _ADS_SET_CHANNEL(uint8_t channel);
-
-/** @brief Prueft im Statusregister, ob Messdaten bereitstehen. */
-bool _ADS_READY(void);
-
-/** @brief Setzt den ADC zurueck und konfiguriert seine Register. */
-void _ADS_INIT(void);
-
-/** @brief Misst einen Kanal blockierend und liefert den ADC-Rohwert. */
-void _ADS_SAMPLE_CHANNEL(uint8_t channel, int32_t* sample_data);
-
-/** @brief Misst alle acht Kanaele nacheinander. */
-void _ADS_FULL_SAMPLE(ADS_FULL_SAMPLE_RAW_t* full_sample_result);
+/** @brief Samples all eight channels and returns their voltages in volts. */
+ADS_FULL_SAMPLE_VOLTAGES_t ADS_GET_VOLTAGES(void);

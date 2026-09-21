@@ -1,16 +1,20 @@
-//Autor: Lisa , Datum: 18.09.2026
+//Author: Lisa, Date: 18.09.2026
 
 #include <stdio.h>
 #include <string.h>
 #include "pico/stdlib.h"
 
 
-//Befehle, die wir brauchen:
+//Required commands:
 
 // START_DISCHARGE_PULSE 
 // START_CHARGE_PULSE
 // START_DISCHARGE_CONT
 // START_CHARGE_CONT
+
+
+//Temperature sampling API: full_sample_temperatures_t sample_temperatures();
+
 
 #define LED_PIN 1
 
