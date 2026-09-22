@@ -2,40 +2,8 @@
 // Date: 19.9.2026
 
 #pragma once
-#include <stdbool.h>
 #include <stdint.h>
 
-//circuit constants
-#define ADS_CHANNEL_COUNT 8
-#define ADS_ADC_MAX 0b011111111111111111111111
-#define ADS_VREFP 2.5f //Volt
-
-//timing constants
-#define ADS_TIME_SPI_T6 10 //us
-#define ADS_TIME_BEFORE_CS_1 2 
-#define ADS_TIME_SAMPLE_DELAY 1000 //us
-#define ADS_TIME_SAMPLE 10 //us
-#define ADS_TIME_CAL 1000 //us
-
-//sample rates
-#define ADS_SPS_30k 0b11110000 
-#define ADS_SPS_15k 0b11100000
-#define ADS_SPS_7k5 0b11010000
-#define ADS_SPS_3k75 0b11000000
-#define ADS_SPS_2k 0b10110000
-#define ADS_SPS_1k 0b10100001
-#define ADS_SPS_500 0b10010010
-#define ADS_SPS_100 0b10000010
-#define ADS_SPS_60 0b01110010
-#define ADS_SPS_50 0b01100011
-#define ADS_SPS_30 0b01010011
-#define ADS_SPS_25 0b01000011
-#define ADS_SPS_15 0b00110011
-#define ADS_SPS_10 0b00100011
-#define ADS_SPS_5 0b00010011
-#define ADS_SPS_2_5 0b00000011
-
-//Register addresses
 #define ADS_REG_ADR_STATUS 0x00u
 #define ADS_REG_ADR_MUX    0x01u
 #define ADS_REG_ADR_ADCON  0x02u
@@ -48,26 +16,25 @@
 #define ADS_REG_ADR_FSC1   0x09u
 #define ADS_REG_ADR_FSC2   0x0Au
 
-//commands
-#define ADS_CMD_WAKEUP  0b00000000  //Completes SYNC and Exits Standby Mode
-#define ADS_CMD_RDATA   0b00000001  //Read Data
-#define ADS_CMD_RDATAC  0b00000011 //Read Data Continuously
-#define ADS_CMD_SDATAC  0b00001111 //Stop Read Data Continuously
-#define ADS_CMD_RREG    0b00010000 //Read from REG (mask last 4 bits)
-#define ADS_CMD_WREG    0b01010000 //Write to REG
-#define ADS_CMD_SELFCAL 0b11110000 //Offset and Gain Self-Calibration
-#define ADS_CMD_SELFOCAL    0b11110001 //Offset Self-Calibration
-#define ADS_CMD_SELFGCAL    0b11110010 //Gain Self-Calibration
-#define ADS_CMD_SYSOCAL 0b11110011 //System Offset Calibration
-#define ADS_CMD_SYSGCAL 0b11110100 //System Gain Calibration
-#define ADS_CMD_SYNC    0b11111100 //Synchronize the A/D Conversion
-#define ADS_CMD_STANDBY 0b11111101  //Begin Standby Mode
-#define ADS_CMD_RESET   0b11111110 //Reset to Power-Up Values
+#define ADS_CMD_WAKEUP  0b 0000 0000  //Completes SYNC and Exits Standby Mode 
+#define ADS_CMD_RDATA   0b 0000 0001  //Read Data
+#define ADS_CMD_RDATAC  0b 0000 0011 //Read Data Continuously
+#define ADS_CMD_SDATAC  0b 0000 1111 //Stop Read Data Continuously
+#define ADS_CMD_RREG    0b 0001 0000 //Read from REG (mask last 4 bits)
+#define ADS_CMD_WREG    0b 0101 0000 //Write to REG
+#define ADS_CMD_SELFCAL 0b 1111 0000 //Offset and Gain Self-Calibration 
+#define ADS_CMD_SELFOCAL    0b 1111 0001 //Offset Self-Calibration
+#define ADS_CMD_SELFGCAL    0b 1111 0010 //Gain Self-Calibration
+#define ADS_CMD_SYSOCAL 0b 1111 0011 //System Offset Calibration
+#define ADS_CMD_SYSGCAL 0b 1111 0100 //System Gain Calibration
+#define ADS_CMD_SYNC    0b 1111 1100 //Synchronize the A/D Conversion 
+#define ADS_CMD_STANDBY 0b 1111 1101  //Begin Standby Mode
+#define ADS_CMD_RESET   0b 1111 1110 //Reset to Power-Up Values
+#define ADS_CMD_WAKEUP  0b 1111 1111 // Completes SYNC and Exits Standby Mode
 
-//register data types
 typedef union {
     struct {
-        uint8_t DRDYn : 1; /* Read-only; 0 = data ready. */
+        uint8_t DRDYn : 1; /* Nur lesbar; 0 = Daten bereit. */
         uint8_t BUFEN : 1;
         uint8_t ACAL  : 1;
         uint8_t ORDER : 1;
@@ -83,26 +50,36 @@ typedef union {
 /* MUX: Reset = 0x01 (AINP = AIN0, AINN = AIN1). */
 typedef union {
     struct {
-        uint8_t NSEL    :   4;
-        uint8_t PSEL    :   4;
+        uint8_t NSEL0 : 1;
+        uint8_t NSEL1 : 1;
+        uint8_t NSEL2 : 1;
+        uint8_t NSEL3 : 1;
+        uint8_t PSEL0 : 1;
+        uint8_t PSEL1 : 1;
+        uint8_t PSEL2 : 1;
+        uint8_t PSEL3 : 1;
     } data_fields;
 
     uint8_t raw_data;
 } ADS_REG_MUX_t;
 
-/* ADCON: Reset = 0x20; Bit 7 is reserved and must remain 0. */
+/* ADCON: Reset = 0x20; Bit 7 ist reserviert und muss 0 bleiben. */
 typedef union {
     struct {
-        uint8_t PGA     : 3;
-        uint8_t SDCS    : 2;
-        uint8_t CLK     : 2;
+        uint8_t PGA0     : 1;
+        uint8_t PGA1     : 1;
+        uint8_t PGA2     : 1;
+        uint8_t SDCS0    : 1;
+        uint8_t SDCS1    : 1;
+        uint8_t CLK0     : 1;
+        uint8_t CLK1     : 1;
         uint8_t reserved : 1;
     } data_fields;
 
     uint8_t raw_data;
 } ADS_REG_ADCON_t;
 
-/* DRATE: Reset = 0xF0 (30000 SPS at fCLKIN = 7.68 MHz). */
+/* DRATE: Reset = 0xF0 (30000 SPS bei fCLKIN = 7,68 MHz). */
 typedef union {
     struct {
         uint8_t DR0 : 1;
@@ -118,7 +95,7 @@ typedef union {
     uint8_t raw_data;
 } ADS_REG_DRATE_t;
 
-/* IO: Reset = 0xE0; DIRn: 0 = output, 1 = input. */
+/* IO: Reset = 0xE0; DIRn: 0 = Ausgang, 1 = Eingang. */
 typedef union {
     struct {
         uint8_t DIO0 : 1;
@@ -135,11 +112,11 @@ typedef union {
 } ADS_REG_IO_t;
 
 /*
- * OFC and FSC each contain three bytes: byte 0 = LSB, byte 2 = MSB.
- * Their reset values depend on calibration and are not fixed at 0.
+ * OFC und FSC bestehen jeweils aus drei Bytes: Byte 0 = LSB, Byte 2 = MSB.
+ * Ihre Resetwerte haengen von der Kalibrierung ab und sind nicht fest 0.
  */
 
-/* OFC0: Offset calibration, Bits 0-7. */
+/* OFC0: Offset-Kalibrierung, Bits 0-7. */
 typedef union {
     struct {
         uint8_t OFC00 : 1;
@@ -155,7 +132,7 @@ typedef union {
     uint8_t raw_data;
 } ADS_REG_OFC0_t;
 
-/* OFC1: Offset calibration, Bits 8-15. */
+/* OFC1: Offset-Kalibrierung, Bits 8-15. */
 typedef union {
     struct {
         uint8_t OFC08 : 1;
@@ -171,7 +148,7 @@ typedef union {
     uint8_t raw_data;
 } ADS_REG_OFC1_t;
 
-/* OFC2: Offset calibration, Bits 16-23. */
+/* OFC2: Offset-Kalibrierung, Bits 16-23. */
 typedef union {
     struct {
         uint8_t OFC16 : 1;
@@ -187,7 +164,7 @@ typedef union {
     uint8_t raw_data;
 } ADS_REG_OFC2_t;
 
-/* FSC0: Gain calibration, Bits 0-7. */
+/* FSC0: Verstaerkungskalibrierung, Bits 0-7. */
 typedef union {
     struct {
         uint8_t FSC00 : 1;
@@ -203,7 +180,7 @@ typedef union {
     uint8_t raw_data;
 } ADS_REG_FSC0_t;
 
-/* FSC1: Gain calibration, Bits 8-15. */
+/* FSC1: Verstaerkungskalibrierung, Bits 8-15. */
 typedef union {
     struct {
         uint8_t FSC08 : 1;
@@ -219,7 +196,7 @@ typedef union {
     uint8_t raw_data;
 } ADS_REG_FSC1_t;
 
-/* FSC2: Gain calibration, Bits 16-23. */
+/* FSC2: Verstaerkungskalibrierung, Bits 16-23. */
 typedef union {
     struct {
         uint8_t FSC16 : 1;

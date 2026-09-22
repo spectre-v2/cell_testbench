@@ -25,6 +25,24 @@ int main()
     gpio_set_dir(ADS_PIN_CS, GPIO_OUT);
     gpio_put(ADS_PIN_CS, 1);
   
-    statemachine_entry();
+    //statemachine_entry();
+
+    while(1){
+
+        ADS_FULL_SAMPLE_VOLTAGES_t voltages;
+        voltages = ADS_GET_VOLTAGES();
+       // full_sample_temperatures_t temperatures = convert_voltages_to_temperatures(&voltages);
+        for(uint8_t channel = 0; channel < ADS_CHANNEL_COUNT; channel ++){
+            printf("Channel %u: V\n ", channel+1, voltages.data_array[channel]);
+        }
+        sleep_ms(1000);
+
+
+        
+
+
+
+    }
+
 
 }
