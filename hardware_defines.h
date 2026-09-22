@@ -11,6 +11,7 @@
 #define ADS_PIN_CS   1
 #define ADS_PIN_SCK  2
 #define ADS_PIN_TX 3
+#define ADS_PIN_DRDY 4
 
 
 

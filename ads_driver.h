@@ -11,11 +11,9 @@
 #define ADS_VREFP 2.5f //Volt
 
 //timing constants
-#define ADS_TIME_SPI_T6 10 //us
-#define ADS_TIME_BEFORE_CS_1 2 
-#define ADS_TIME_SAMPLE_DELAY 1000 //us
-#define ADS_TIME_SAMPLE 10 //us
-#define ADS_TIME_CAL 1000 //us
+#define ADS_TIME_SPI_MSG_DELAY 10 //us
+#define ADS_TIME_CS_DELAY 2 //us 
+
 
 //sample rates
 #define ADS_SPS_30k 0b11110000 
@@ -256,3 +254,7 @@ typedef union{
 
 /** @brief Samples all eight channels and returns their voltages in volts. */
 ADS_FULL_SAMPLE_VOLTAGES_t ADS_GET_VOLTAGES(void);
+/** @brief Initializes the ADC using an ADS_SPS_* data-rate code. */
+void _ADS_INIT(uint8_t samples_per_second);
+void _ADS_WAIT_FOR_DRDY();
+uint8_t _ADS_READ_REG(uint8_t reg_adr);

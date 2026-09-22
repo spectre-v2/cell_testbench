@@ -20,11 +20,29 @@ int main()
     gpio_set_function(ADS_PIN_CS,   GPIO_FUNC_SIO);
     gpio_set_function(ADS_PIN_SCK,  GPIO_FUNC_SPI);
     gpio_set_function(ADS_PIN_TX, GPIO_FUNC_SPI);
-    
+    gpio_set_function(ADS_PIN_DRDY, GPIO_FUNC_SIO);
     
     gpio_set_dir(ADS_PIN_CS, GPIO_OUT);
+    gpio_set_dir(ADS_PIN_DRDY, GPIO_IN);
+
     gpio_put(ADS_PIN_CS, 1);
   
-    statemachine_entry();
+    //statemachine_entry();
+    _ADS_INIT(ADS_SPS_100);
+    _ADS_WAIT_FOR_DRDY();
 
+    while(1){
+        
+            ADS_FULL_SAMPLE_VOLTAGES_t voltages = ADS_GET_VOLTAGES();
+
+            for(uint8_t channel=0; channel<ADS_CHANNEL_COUNT; channel ++){
+                printf(" C%u:%f", channel , voltages.data_array[channel]);
+
+            }
+        printf(" \n");
+
+    
+    }
+
+    
 }

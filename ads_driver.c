@@ -20,7 +20,7 @@ void cs_low(){
 }
 /** @brief Waits for the CS hold time, then drives chip select HIGH. */
 void cs_high(){
-    sleep_us(ADS_TIME_BEFORE_CS_1);
+    sleep_us(ADS_TIME_CS_DELAY);
     gpio_put(ADS_PIN_CS, 1);
 }
 
@@ -40,7 +40,7 @@ uint8_t _ADS_READ_REG(uint8_t reg_adr){
     uint8_t reg_read_buffer;
     cs_low();
     spi_write_blocking(ADS_SPI_PORT, cmd, 2 );
-    sleep_us(ADS_TIME_SPI_T6);
+    sleep_us(ADS_TIME_SPI_MSG_DELAY);
     spi_read_blocking(ADS_SPI_PORT,0x00, &reg_read_buffer, 1);
     cs_high();
     return reg_read_buffer;
@@ -82,21 +82,19 @@ void _ADS_SET_CHANNEL(uint8_t channel){
 
       ADS_REG_MUX_t reg_mux = {
         .data_fields.PSEL = channel,
-        .data_fields.NSEL = 0b1000
+        .data_fields.NSEL = 0b1000 //AINCOM
     };
 
     _ADS_WRITE_REG(ADS_REG_ADR_MUX, reg_mux.raw_data);
 }
 
 /**
- * @brief Reads the data-ready bit from the status register.
- * @return true if DRDYn is LOW.
+ * @brief Idles until DRDY gpio goes low, signaling sample data is ready.
  */
-bool _ADS_READY(){
-   ADS_REG_STATUS_t tmp_reg_stat;
-   tmp_reg_stat.raw_data = _ADS_READ_REG(ADS_REG_ADR_STATUS);
-
-   return (bool)!tmp_reg_stat.data_fields.DRDYn;
+void _ADS_WAIT_FOR_DRDY(){
+    while(gpio_get(ADS_PIN_DRDY) != 0){
+        __asm volatile ("nop");
+    }
 }
 
 /**
@@ -104,11 +102,11 @@ bool _ADS_READY(){
  * @pre SPI and CS are initialized. Wait for calibration to finish before sampling.
 
  */
-void _ADS_INIT(){
+void _ADS_INIT(uint8_t samples_per_second){
     ADS_REG_STATUS_t reg_stat = {
         .data_fields.ORDER = 0,
         .data_fields.ACAL   =   0,
-        .data_fields.BUFEN = 0
+        .data_fields.BUFEN = 1
     };
 
     ADS_REG_MUX_t reg_mux = {
@@ -124,17 +122,21 @@ void _ADS_INIT(){
     };
 
     ADS_REG_DRATE_t reg_drate = {
-        .raw_data = ADS_SPS_1k
+        .raw_data = samples_per_second
     };
 
 
 _ADS_SEND_CMD(ADS_CMD_RESET);
-sleep_us(ADS_TIME_CAL);
+_ADS_WAIT_FOR_DRDY();
+
 _ADS_WRITE_REG(ADS_REG_ADR_STATUS, reg_stat.raw_data);
 _ADS_WRITE_REG(ADS_REG_ADR_MUX, reg_mux.raw_data);
 _ADS_WRITE_REG(ADS_REG_ADR_ADCON, reg_adcon.raw_data);
 _ADS_WRITE_REG(ADS_REG_ADR_DRATE, reg_drate.raw_data);
+
 _ADS_SEND_CMD(ADS_CMD_SELFCAL);
+_ADS_WAIT_FOR_DRDY();
+
 
 }
 
@@ -152,18 +154,19 @@ void _ADS_SAMPLE_CHANNEL(uint8_t channel, int32_t* sample_data){
     uint8_t sample_data_array[3];
 
     
+    _ADS_WAIT_FOR_DRDY();
+
     _ADS_SET_CHANNEL(channel);
     _ADS_SEND_CMD(ADS_CMD_SYNC);
-    sleep_us(ADS_TIME_SAMPLE);
+    sleep_us(10);
     _ADS_SEND_CMD(ADS_CMD_WAKEUP);
 
-    while(!_ADS_READY()) {
-        sleep_us(ADS_TIME_SAMPLE_DELAY);
-    }
+ 
+    _ADS_WAIT_FOR_DRDY();
 
     cs_low();
     spi_write_blocking(ADS_SPI_PORT, &rdata_cmd, 1);
-    sleep_us(ADS_TIME_SPI_T6);
+    sleep_us(ADS_TIME_SPI_MSG_DELAY);
     spi_read_blocking(ADS_SPI_PORT, 0x00, sample_data_array, 3);
     cs_high();
 
