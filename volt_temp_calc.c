@@ -15,7 +15,7 @@
 #include "volt_temp_calc.h"
 
 #define TEMP_CALC_DIVIDER_VOLTAGE 5 //Volt
-#define TEMP_CALC_R_FIX 10000 // Ohm
+#define TEMP_CALC_R_FIX 20000 // Ohm
 #define TEMP_CALC_NTC_R_NOMINAL 10000 //Ohm
 #define TEMP_CALC_NTC_T_NOMINAL 298.15 //Kelvin
 #define TEMP_CALC_NTC_BETA 3435 //Kelvin

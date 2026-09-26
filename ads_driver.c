@@ -126,18 +126,29 @@ void _ADS_INIT(uint8_t samples_per_second){
     };
 
 
-_ADS_SEND_CMD(ADS_CMD_RESET);
-_ADS_WAIT_FOR_DRDY();
+    spi_init(ADS_SPI_PORT, ADS_SPI_DATARATE);
+    spi_set_format(ADS_SPI_PORT, 8, SPI_CPOL_0, SPI_CPHA_1, SPI_MSB_FIRST);
+    gpio_set_function(ADS_PIN_RX, GPIO_FUNC_SPI);
+    gpio_set_function(ADS_PIN_CS,   GPIO_FUNC_SIO);
+    gpio_set_function(ADS_PIN_SCK,  GPIO_FUNC_SPI);
+    gpio_set_function(ADS_PIN_TX, GPIO_FUNC_SPI);
+    gpio_set_function(ADS_PIN_DRDY, GPIO_FUNC_SIO);
 
-_ADS_WRITE_REG(ADS_REG_ADR_STATUS, reg_stat.raw_data);
-_ADS_WRITE_REG(ADS_REG_ADR_MUX, reg_mux.raw_data);
-_ADS_WRITE_REG(ADS_REG_ADR_ADCON, reg_adcon.raw_data);
-_ADS_WRITE_REG(ADS_REG_ADR_DRATE, reg_drate.raw_data);
+    gpio_set_dir(ADS_PIN_CS, GPIO_OUT);
+    gpio_set_dir(ADS_PIN_DRDY, GPIO_IN);
 
-_ADS_SEND_CMD(ADS_CMD_SELFCAL);
-_ADS_WAIT_FOR_DRDY();
+    gpio_put(ADS_PIN_CS, 1);
 
+    _ADS_SEND_CMD(ADS_CMD_RESET);
+    _ADS_WAIT_FOR_DRDY();
 
+    _ADS_WRITE_REG(ADS_REG_ADR_STATUS, reg_stat.raw_data);
+    _ADS_WRITE_REG(ADS_REG_ADR_MUX, reg_mux.raw_data);
+    _ADS_WRITE_REG(ADS_REG_ADR_ADCON, reg_adcon.raw_data);
+    _ADS_WRITE_REG(ADS_REG_ADR_DRATE, reg_drate.raw_data);
+
+    _ADS_SEND_CMD(ADS_CMD_SELFCAL);
+    _ADS_WAIT_FOR_DRDY();
 }
 
 

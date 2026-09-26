@@ -40,6 +40,8 @@ add_executable(cell_testbench
         statemachine.c
         ads_driver.c
         volt_temp_calc.c
+        ssd1309.c
+
 )
 
 pico_set_program_name(cell_testbench "cell_testbench")
@@ -60,6 +62,7 @@ target_include_directories(cell_testbench PRIVATE
 # Add any user requested libraries
 target_link_libraries(cell_testbench 
         hardware_spi
+        hardware_i2c
         )
 
 pico_add_extra_outputs(cell_testbench)
