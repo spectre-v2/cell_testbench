@@ -199,9 +199,7 @@ void _ADS_SAMPLE_CHANNEL(uint8_t channel, int32_t* sample_data){
  * @return Channel voltages in volts relative to AINCOM; array index 0 corresponds to AIN0.
  * @pre The ADC is ready for sampling; PGA = 1 and VREFN = 0 V.
  */
-ADS_FULL_SAMPLE_VOLTAGES_t ADS_GET_VOLTAGES(void){
-
-    ADS_FULL_SAMPLE_VOLTAGES_t voltage_data;
+void ADS_GET_VOLTAGES(ADS_FULL_SAMPLE_VOLTAGES_t *voltage_data){
 
     for(uint8_t channel = 0; channel < ADS_CHANNEL_COUNT; channel ++){
 
@@ -209,11 +207,8 @@ ADS_FULL_SAMPLE_VOLTAGES_t ADS_GET_VOLTAGES(void){
         _ADS_SAMPLE_CHANNEL(channel, &channel_raw_data);
 
         //The factor 2.0f comes from the ADS1256 internal scaling.
-        voltage_data.data_array[channel]= 2.0f * ADS_VREFP * ((float)channel_raw_data/ADS_ADC_MAX);
+        voltage_data->data_array[channel]= 2.0f * ADS_VREFP * ((float)channel_raw_data/ADS_ADC_MAX);
     }
-
-    return voltage_data;
-
 }
 
 

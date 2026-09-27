@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "pico/stdlib.h"
 #include "hardware/i2c.h"
 #include "ssd1309.h"
@@ -30,18 +31,18 @@ void ssd_update_display(){
     tx_buffer[0] = SSD_CTRL_DAT;
     memcpy(&tx_buffer[1], &framebuffer, sizeof(framebuffer));
 
-    i2c_write_blocking(SSD_I2C_PORT, SSD_DEVICE_ADDRESS, framebuffer, sizeof(framebuffer), false);
+    i2c_write_blocking(SSD_I2C_PORT, SSD_DEVICE_ADDRESS, tx_buffer, sizeof(tx_buffer), false);
 }
 
 
 void ssd_clear(){
 
-    framebuffer = {0};
+    memset(framebuffer, 0, sizeof(framebuffer));
+    current_page = 0;
+    current_column = 0;
     ssd_update_display();
 
 }
-
-   
 
 
 void ssd_init(){
@@ -53,15 +54,41 @@ void ssd_init(){
     gpio_pull_up(SSD_PIN_SCL);
 
     i2c_write_blocking(SSD_I2C_PORT, SSD_DEVICE_ADDRESS, ssd_config, sizeof(ssd_config), false);
+
+    ssd_clear();
 }
 
-void ssd_write_symbol( *text){
+void ssd_write_symbol(char symbol){
 
+    uint16_t framebuffer_target_pos = current_column + ( current_page * SSD_WIDTH_PIXEL);
+
+    memcpy(&framebuffer[framebuffer_target_pos], &orbitron[symbol], SSD_SYMBOL_WIDTH);
+
+        current_column = current_column + SSD_SYMBOL_WIDTH;
+
+    if (current_column==SSD_WIDTH_PIXEL){
+        current_page++;
+        current_column = 0;
+    }
+
+    if (current_page==SSD_HEIGHT_PAGES){
+        current_page = 0;
+    }
     
     
 }
 
-void ssd_write_text(char *line){
-    
 
+
+void ssd_write_text(char *text){
+
+    uint8_t text_pos = 0;
+
+    while(text[text_pos] != '\0'){
+
+        ssd_write_symbol(text[text_pos]);
+        text_pos++;
+
+    }
+    
 }

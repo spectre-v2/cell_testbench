@@ -3,7 +3,7 @@
 
 
 #pragma once
-#include <hardware/i2c.h>#
+#include <hardware/i2c.h>
 
 #define ADS_SPI_PORT spi0
 
@@ -13,7 +13,7 @@
 #define ADS_PIN_TX 3
 #define ADS_PIN_DRDY 5
 
-#define SSD_I2C_PORT i2c
+#define SSD_I2C_PORT i2c0
 
 #define SSD_PIN_SCL 2
 #define SSD_PIN_SDA 1
@@ -23,3 +23,4 @@
 #define LED_PIN 25
 
 #define ADS_SPI_DATARATE 1000*1000
+

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "ads_driver.h"
 
 typedef union {
 
@@ -29,8 +30,10 @@ float data_array[8];
 float temperature_from_voltage(float ntc_voltage);
 
 /**
- * @brief Samples all eight channels and calculates their NTC temperatures.
- * @return Temperatures in kelvin; array index 0 corresponds to AIN0.
+ * @brief Calculates NTC temperatures for the six configured temperature channels.
+ * @param[out] temperatures Receives temperatures in kelvin; index 0 corresponds to AIN0.
+ * @param[in] voltages Previously sampled channel voltages.
  * @pre The ADC is ready and all channels use the configured NTC divider.
  */
-full_sample_temperatures_t sample_temperatures(void);
+void convert_voltages_to_temperatures(full_sample_temperatures_t *temperatures,
+                                     ADS_FULL_SAMPLE_VOLTAGES_t *voltages);

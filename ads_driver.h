@@ -252,8 +252,8 @@ typedef union{
 }ADS_FULL_SAMPLE_VOLTAGES_t;
 
 
-/** @brief Samples all eight channels and returns their voltages in volts. */
-ADS_FULL_SAMPLE_VOLTAGES_t ADS_GET_VOLTAGES(void);
+/** @brief Samples all eight channels and writes their voltages in volts to voltage_data. */
+void ADS_GET_VOLTAGES(ADS_FULL_SAMPLE_VOLTAGES_t *voltage_data);
 /** @brief Initializes the ADC using an ADS_SPS_* data-rate code. */
 void _ADS_INIT(uint8_t samples_per_second);
 void _ADS_WAIT_FOR_DRDY();

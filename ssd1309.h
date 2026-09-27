@@ -46,14 +46,18 @@
 #define SSD_COMMAND_COM_INVERT_OFF 0xC0
 #define SSD_COMMAND_COM_INVERT_ON 0xC8
 
-
-#define SSD_HEIGHT 64
-#define SSD_WIDTH 128
-#define SSD_FRAME_SIZE ((SSD_HEIGHT * SSD_WIDTH) / 8)
+#define SSD_HEIGHT_PAGES 8
+#define SSD_HEIGHT_PIXEL 64
+#define SSD_WIDTH_PIXEL 128
+#define SSD_SYMBOL_WIDTH 8
+#define SSD_FRAME_SIZE ((SSD_HEIGHT_PIXEL * SSD_WIDTH_PIXEL) / 8)
 
 
 void ssd_clear();
 
 void ssd_init();
 
-void ssd_print();
+void ssd_update_display(void);
+void ssd_write_symbol(char symbol);
+
+void ssd_write_text(char *text);
