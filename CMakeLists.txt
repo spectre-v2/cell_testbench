@@ -41,6 +41,7 @@ add_executable(cell_testbench
         ads_driver.c
         volt_temp_calc.c
         ssd1309.c
+        tasks.c
 
 )
 

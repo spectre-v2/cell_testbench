@@ -2,10 +2,15 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include "pico/stdlib.h"
+#include "hardware_defines.h"
+#include "statemachine.h"
 
 
-//Required commands:
+SYSTEM_STATE_t system_state = SYSTEM_IDLE_S;
+//commands:
+
 
 // START_DISCHARGE_PULSE 
 // START_CHARGE_PULSE
@@ -13,86 +18,56 @@
 // START_CHARGE_CONT
 
 
-//Temperature sampling API: full_sample_temperatures_t sample_temperatures();
 
+static void process_command(const char *command){
 
-#define LED_PIN 1
-
-#define PIN_CHARGE_RELAY 4
-#define PIN_DISCHARGE_RELAY 5
-
-/*
-
-int statemachine_entry()
-{
-  
-    stdio_init_all();
-
-    gpio_init(LED_PIN);
-    gpio_set_function(LED_PIN,GPIO_FUNC_SIO);
-    gpio_set_dir(LED_PIN, GPIO_OUT);
-
-    char wort[20];
-
-    while (scanf("%19s", wort)==1) {
-        if (strcmp(wort,"lisa")==0) {
-        printf("LED blinkt!\n");
-
-    for (int i = 1; i <= 10; i++){
-
-        gpio_put(LED_PIN,true);
-        sleep_ms(200);
-        gpio_put(LED_PIN,false);
-        sleep_ms(200);
-    }
-
-
-}
-
-*/
-
-
-int statemachine_entry(){
-    const uint RELAY_PIN = 10;
-    gpio_init(RELAY_PIN);
-    gpio_set_dir(RELAY_PIN, GPIO_OUT);
-    gpio_put(RELAY_PIN, 0); 
-
-    const uint RELAY_PIN2 = 20;
-    gpio_init(RELAY_PIN2);
-    gpio_set_dir(RELAY_PIN2, GPIO_OUT);
-    gpio_put(RELAY_PIN2, 0); 
-
-
-    char wort[20];
-
-    while (scanf("%19s", wort)==1) {
-
-        if (strcmp(wort,"lisa")==0) {
-            printf("LED blinkt!\n");
-
-            for (int i = 1; i <= 4; i++) {
-                gpio_put(RELAY_PIN, 1);
-                sleep_ms(1000);
-                gpio_put(RELAY_PIN, 0); 
-                sleep_ms(1000);
-            }
+        if (strcmp(command,"START_DISCHARGE_PULSE")==0) {
+            system_state = DISCHARGE_PULSE_S;
         }
 
-        if (strcmp(wort,"leif")==0) {
-        printf("LED 2 blinkt!\n");
+        if (strcmp(command,"START_CHARGE_PULSE")==0) {
+            system_state = CHARGE_PULSE_S;
+        }
 
-        for (int i = 1; i <= 8; i++) {
-        gpio_put(RELAY_PIN2, 1);
-        sleep_ms(500);
-        gpio_put(RELAY_PIN2, 0); 
-        sleep_ms(500);
+        if (strcmp(command, "START_DISCHARGE_CONT")==0) {
+            system_state = DISCHARGE_CONT_S;
+        }
+
+        if (strcmp(command, "START_CHARGE_CONT")==0) {
+            system_state = CHARGE_CONT_S;
+        }
+
+        if (strcmp(command, "STOP")==0) {
+            system_state = SYSTEM_IDLE_S;
+        }
+}
+
+void update_state(void){
+    static char command[32];
+    static size_t length = 0;
+    static bool overflow = false;
+
+    // Bound work per call, even if input arrives continuously.
+    for (unsigned i = 0; i < 64; ++i) {
+        int ch = getchar_timeout_us(0);
+        if (ch == PICO_ERROR_TIMEOUT) {
+            return;
+        }
+
+        if (isspace((unsigned char)ch)) {
+            if (length > 0 && !overflow) {
+                command[length] = '\0';
+                process_command(command);
+                length = 0;
+                return;
+            }
+            length = 0;
+            overflow = false;
+        } else if (length < sizeof(command) - 1) {
+            command[length++] = (char)ch;
+        } else {
+            overflow = true;
+        }
     }
 }
 
-
-}
-
-
-
-}

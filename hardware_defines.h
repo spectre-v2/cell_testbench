@@ -19,6 +19,10 @@
 #define SSD_PIN_SDA 1
 
 
+#define PIN_CHARGE_RELAY 7
+#define PIN_DISCHARGE_RELAY 8
+
+
 
 #define LED_PIN 25
 
