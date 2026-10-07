@@ -9,6 +9,21 @@
 #include "volt_temp_calc.h"
 
 
+
+
+#define TASK_COUNT (sizeof(tasks) / sizeof(tasks[0]))
+
+static ADS_FULL_SAMPLE_VOLTAGES_t voltages;
+static full_sample_temperatures_t temperatures;
+
+
+//relay properties for pulse generation
+static bool relay_charge_on = false;
+static bool relay_discharge_on = false;
+
+static uint64_t relay_charge_last_switch_ms = 0;
+static uint64_t relay_discharge_last_switch_ms = 0;
+
 // Relay phase durations in milliseconds.
 #define RELAY_CHARGE_ON_TIME 3000
 #define RELAY_CHARGE_OFF_TIME 3000
@@ -16,45 +31,35 @@
 #define RELAY_DISCHARGE_ON_TIME 3000
 #define RELAY_DISCHARGE_OFF_TIME 3000
 
-#define TASK_COUNT (sizeof(tasks) / sizeof(tasks[0]))
-
-static uint64_t system_start_time_us;
-static ADS_FULL_SAMPLE_VOLTAGES_t voltages;
-static full_sample_temperatures_t temperatures;
-
-static void read_voltages(void);
-static void calculate_temperatures(void);
-
-
 //main struct containing all tasks
 task_t tasks[] = {
-    {.service_routine = read_voltages, .interval_us = 10000},
-    {.service_routine = calculate_temperatures, .interval_us = 10000},
-    {.service_routine = led_toggle, .interval_us = 100000},
-    {.service_routine = print_data, .interval_us = 10000},
-    {.service_routine = update_state, .interval_us = 10000},
-    {.service_routine = update_relays, .interval_us = 10000}
-
+    {.service_routine = read_voltages, .interval_ms = 10},
+    {.service_routine = calculate_temperatures, .interval_ms = 10},
+    {.service_routine = led_toggle, .interval_ms = 100},
+    {.service_routine = print_data, .interval_ms = 10},
+    {.service_routine = update_state, .interval_ms = 10},
+    {.service_routine = update_charge_relay, .interval_ms = 100},
+    {.service_routine = update_discharge_relay, .interval_ms = 100},
 };
 
 void task_scheduler_init(void){
 
-    system_start_time_us = time_us_64();
+    uint64_t time_now = time_ms_64();
 
     for (uint8_t task = 0; task<TASK_COUNT; task++){
-        tasks[task].next_due_us = system_start_time_us + tasks[task].interval_us;
+        tasks[task].next_due_ms = time_now + tasks[task].interval_ms;
     }
 }
 
 void task_scheduler_tick(){
 
-    uint64_t system_time_now = time_us_64();
+    uint64_t time_now = time_us_64();
 
     for(uint8_t task = 0; task < TASK_COUNT; task++){
 
-            if(tasks[task].next_due_us <= system_time_now){
+            if(tasks[task].next_due_ms <= time_now){
                 tasks[task].service_routine();
-                tasks[task].next_due_us = system_time_now+ tasks[task].interval_us;
+                tasks[task].next_due_ms = time_now + tasks[task].interval_ms;
             }
     }
 }
@@ -77,63 +82,49 @@ void print_data(){
     printf(" \n");
 }
 
-uint64_t timestamp_ms(){
-    return (time_us_64()- system_start_time_us)/1000;
+
+uint64_t time_ms_64(){
+    return time_us_64()/1000;
 }
 
 void led_toggle(){
     gpio_xor_mask(1<<LED_PIN);
 }
 
-void update_relays(void){
-    static SYSTEM_STATE_t previous_state = SYSTEM_IDLE_S;
-    static bool relay_on = false;
-    static uint64_t next_switch_us = 0;
+void update_charge_relay(void){
+    uint64_t time_now_ms = time_ms_64();
 
-    const uint64_t now = time_us_64();
-    const bool state_changed = system_state != previous_state;
+    uint32_t relay_phase_ms;
 
-    if (state_changed) {
-        gpio_put(PIN_CHARGE_RELAY, 0);
-        gpio_put(PIN_DISCHARGE_RELAY, 0);
-        relay_on = false;
-        previous_state = system_state;
+    if(relay_charge_on) relay_phase_ms = RELAY_CHARGE_ON_TIME;
+    if(relay_charge_off) relay_phase_ms = RELAY_CHARGE_OFF_TIME;
+
+    uint64_t elapsed_time_ms = time_now_ms - relay_charge_last_switch_ms;
+
+    if (elapsed_time_ms >= relay_phase_ms){
+        relay_charge_on = !relay_charge_on;
+        gpio_put(PIN_CHARGE_RELAY, relay_charge_on);
+        relay_charge_last_switch_ms = time_now_ms;
     }
 
-    uint relay_pin;
-    uint32_t on_time_ms;
-    uint32_t off_time_ms;
+}
 
-    switch (system_state) {
-    case CHARGE_PULSE_S:
-        relay_pin = PIN_CHARGE_RELAY;
-        on_time_ms = RELAY_CHARGE_ON_TIME;
-        off_time_ms = RELAY_CHARGE_OFF_TIME;
-        break;
-    case DISCHARGE_PULSE_S:
-        relay_pin = PIN_DISCHARGE_RELAY;
-        on_time_ms = RELAY_DISCHARGE_ON_TIME;
-        off_time_ms = RELAY_DISCHARGE_OFF_TIME;
-        break;
-    case CHARGE_CONT_S:
-        gpio_put(PIN_DISCHARGE_RELAY, 0);
-        gpio_put(PIN_CHARGE_RELAY, 1);
-        return;
-    case DISCHARGE_CONT_S:
-        gpio_put(PIN_CHARGE_RELAY, 0);
-        gpio_put(PIN_DISCHARGE_RELAY, 1);
-        return;
-    case SYSTEM_IDLE_S:
-    default:
-        gpio_put(PIN_CHARGE_RELAY, 0);
-        gpio_put(PIN_DISCHARGE_RELAY, 0);
-        return;
-    }
+void update_discharge_relay(void){
 
-    if (state_changed || now >= next_switch_us) {
-        relay_on = !relay_on;
-        gpio_put(relay_pin, relay_on);
-        // Time each phase from the actual switch; do not catch up missed edges.
-        next_switch_us = now + (uint64_t)(relay_on ? on_time_ms : off_time_ms) * 1000;
+    uint64_t time_now = time_ms_64();
+    
+    uint32_t elapsed_time_ms = time_now - relay_discharge_last_switch_ms;
+
+    uint32_t relay_phase_ms;
+
+    if(relay_discharge_on) relay_phase_ms = RELAY_DISCHARGE_ON_TIME;
+    if(relay_discharge_off) relay_phase_ms = RELAY_DISCHARGE_OFF_TIME;
+    
+    if(elapsed_time_ms >= relay_phase_ms){
+        relay_discharge_on = !relay_discharge_on;
+        gpio_put(PIN_DISCARGE_RELAY, relay_discharge_on );
+        relay_discharge_last_switch_ms = time_now_ms;
     }
 }
+
+

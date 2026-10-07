@@ -5,8 +5,8 @@
 typedef struct {
 
     void (*service_routine)(void);
-    uint32_t interval_us;
-    uint64_t next_due_us;
+    uint32_t interval_ms;
+    uint64_t next_due_ms;
 
 }task_t;
 
