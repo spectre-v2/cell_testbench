@@ -18,9 +18,9 @@
 #define TEMP_CALC_R_FIX 20000 // Ohm
 #define TEMP_CALC_NTC_R_NOMINAL 10000 //Ohm
 #define TEMP_CALC_NTC_T_NOMINAL 298.15 //Kelvin
+#define TEMP_CALC_CELSIUS_OFFSET 273.15 //Kelvin
 #define TEMP_CALC_NTC_BETA 3435 //Kelvin
 #define TEMP_CALC_CHANNEL_COUNT 6
-
 
 /**
  * @brief Calculates NTC temperature using the beta equation.
@@ -48,12 +48,12 @@ float temperature_from_voltage(float ntc_voltage){
 
     float r_ntc = ((ntc_voltage*TEMP_CALC_R_FIX)/(TEMP_CALC_DIVIDER_VOLTAGE-ntc_voltage));
 
-    float temperature;
+    float temperature_K;
 
-    temperature = 1.0f/(   (1.0f/TEMP_CALC_NTC_T_NOMINAL) + (1.0f/TEMP_CALC_NTC_BETA) * log(r_ntc/TEMP_CALC_NTC_R_NOMINAL)  );
-    return temperature;
+    temperature_K = 1.0f/(   (1.0f/TEMP_CALC_NTC_T_NOMINAL) + (1.0f/TEMP_CALC_NTC_BETA) * log(r_ntc/TEMP_CALC_NTC_R_NOMINAL)  );
+    float temperature_C = temperature_K - TEMP_CALC_CELSIUS_OFFSET;
+    return temperature_C;
 }
-
 
 /**
  * @brief Expects struct with voltages and calculates their NTC temperatures.
@@ -67,5 +67,4 @@ void convert_voltages_to_temperatures(full_sample_temperatures_t* temperatures, 
         
         temperatures->data_array[channel]= temperature_from_voltage(voltages->data_array[channel]);
     }
-
 }

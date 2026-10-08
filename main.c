@@ -12,12 +12,27 @@
 #include "tasks.h"
 
 
+void init_gpios(){
+
+    gpio_init(LED_PIN);
+    gpio_set_dir(LED_PIN, GPIO_OUT);
+
+    gpio_init(PIN_CHARGE_RELAY);
+    gpio_set_dir(PIN_CHARGE_RELAY, GPIO_OUT);
+    gpio_put(PIN_CHARGE_RELAY, 0); 
+
+    gpio_init(PIN_DISCHARGE_RELAY);
+    gpio_set_dir(PIN_DISCHARGE_RELAY, GPIO_OUT);
+    gpio_put(PIN_DISCHARGE_RELAY, 0); 
+
+}
 
 int main()
 {
     stdio_init_all();
-    ssd_init();
-    init_relays();
+    //ssd_init();
+    init_gpios();
+
 
     _ADS_INIT(ADS_SPS_100);
     _ADS_WAIT_FOR_DRDY();
@@ -29,15 +44,3 @@ int main()
     
 }
 
-
-void init_relays(){
-
-    gpio_init(PIN_CHARGE_RELAY);
-    gpio_set_dir(PIN_CHARGE_RELAY, GPIO_OUT);
-    gpio_put(PIN_CHARGE_RELAY, 0); 
-
-    gpio_init(PIN_DISCHARGE_RELAY);
-    gpio_set_dir(PIN_DISCHARGE_RELAY, GPIO_OUT);
-    gpio_put(PIN_DISCHARGE_RELAY, 0); 
-
-}

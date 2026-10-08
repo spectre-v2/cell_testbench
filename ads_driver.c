@@ -169,7 +169,6 @@ void _ADS_SAMPLE_CHANNEL(uint8_t channel, int32_t* sample_data){
 
     _ADS_SET_CHANNEL(channel);
     _ADS_SEND_CMD(ADS_CMD_SYNC);
-    sleep_us(10);
     _ADS_SEND_CMD(ADS_CMD_WAKEUP);
 
  

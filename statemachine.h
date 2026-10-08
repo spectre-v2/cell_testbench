@@ -9,4 +9,4 @@ typedef enum {
 }SYSTEM_STATE_t;
 
 extern SYSTEM_STATE_t system_state;
-void update_state(void);
+void update_statemachine(void);
